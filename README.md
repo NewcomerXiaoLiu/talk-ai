@@ -1,25 +1,27 @@
 # Talk-AI 对话系统
 
-一个支持语音对话和文字对话的 AI 对话系统。
+一个采用贾维斯（钢铁侠）风格的炫酷 AI 对话系统，支持语音对话和文字对话功能。
 
 ## 功能特性
 
-- 文字对话：支持与 AI 进行文字交流
-- 语音对话：支持语音识别和语音合成（开发中）
-- 会话管理：创建、切换、删除会话
-- 流式输出：支持实时流式显示 AI 回复（开发中）
+- 贾维斯风格 UI - 深色科技背景、粒子球动画、钢铁侠红金配色
+- 文字对话 - 支持与 AI 进行文字交流
+- 语音对话 - 支持语音识别和语音合成（开发中）
+- 会话管理 - 创建、切换、删除会话
+- 流式输出 - 支持实时流式显示 AI 回复（开发中）
 
 ## 技术栈
 
 ### 前端
 - Vue 3 + Vite + TypeScript
+- SCSS 样式
 - Pinia（状态管理）
-- Vue Router（路由）
+- 贾维斯风格 UI 组件
 
 ### 后端
 - Node.js + Express + TypeScript
 - JSON 文件存储数据
-- AI 服务：豆包 API（可扩展）
+- AI 服务：豆包 API（可扩展架构）
 
 ## 项目结构
 
@@ -30,22 +32,16 @@ talk-ai/
 │   │   ├── components/       # Vue 组件
 │   │   ├── views/            # 页面视图
 │   │   ├── stores/           # Pinia 状态管理
-│   │   ├── services/         # API 服务
-│   │   ├── utils/            # 工具函数
-│   │   ├── types/            # TypeScript 类型
-│   │   └── assets/           # 静态资源
+│   │   ├── styles/           # SCSS 样式
+│   │   └── types/            # TypeScript 类型
 │   └── package.json
 ├── backend/                  # 后端项目
 │   ├── src/
 │   │   ├── routes/           # API 路由
 │   │   ├── services/         # 业务服务
-│   │   ├── controllers/      # 控制器
-│   │   ├── middleware/        # 中间件
-│   │   ├── utils/            # 工具函数
-│   │   └── types/            # TypeScript 类型
-│   ├── config/               # 配置文件
+│   │   └── config/           # 配置文件
 │   └── package.json
-├── docs/                     # 文档
+├── CLAUDE.md
 └── README.md
 ```
 
@@ -71,9 +67,8 @@ pnpm install
 ### 配置环境变量
 
 ```bash
-# 复制环境变量示例文件
+# 后端配置
 cp backend/.env.example backend/.env
-
 # 编辑 backend/.env 文件，填入你的 API 密钥
 ```
 
@@ -93,6 +88,23 @@ pnpm dev
 
 - 前端：http://localhost:5173
 - 后端：http://localhost:3000
+
+## UI 设计
+
+### 贾维斯风格
+
+- 深色科技背景 + 扫描线 + 粒子效果
+- 钢铁侠红金配色（#EF4444 红色 + #F59E0B 金色）
+- 科技感字体（Share Tech Mono / Fira Code）
+- HUD 四角装饰 + 网格背景
+
+### 界面功能
+
+- 粒子球默认视图（3D 旋转 + 能量环动画）
+- 心跳动画（语音按钮脉动效果）
+- 模式切换（粒子视图/对话记录）
+- 聊天界面（消息气泡 + 打字机效果）
+- 系统状态监控（CPU/活动/能量）
 
 ## API 接口
 
@@ -115,6 +127,8 @@ pnpm dev
 
 ## 环境变量
 
+### 后端
+
 | 变量名 | 描述 | 默认值 |
 |--------|------|--------|
 | DOUBAO_API_KEY | 豆包 API 密钥 | - |
@@ -124,12 +138,6 @@ pnpm dev
 | NODE_ENV | 运行环境 | development |
 
 ## 开发规范
-
-### 代码规范
-
-- 使用 TypeScript 进行开发
-- 遵循 ESLint 和 Prettier 配置
-- 保持代码简洁易读
 
 ### Git 提交规范
 
@@ -148,7 +156,6 @@ pnpm dev
 - [ ] 完整的 AI 服务集成（豆包 API）
 - [ ] 语音对话功能
 - [ ] 流式输出支持
-- [ ] 前端 UI 开发
 - [ ] 用户认证功能
 - [ ] 部署配置
 

@@ -4,29 +4,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个名为 "talk-ai" 的对话 AI 项目。项目目标是构建一个 AI 对话系统，支持语音对话和文字对话功能。
+这是一个名为 "talk-ai" 的对话 AI 项目。项目目标是构建一个 AI 对话系统，支持语音对话和文字对话功能。采用贾维斯（钢铁侠）风格的炫酷 UI 设计。
 
 ## 项目结构
 
 ```
 talk-ai/
 ├── frontend/                 # 前端项目（Vue 3 + Vite）
+│   ├── src/
+│   │   ├── components/       # Vue 组件
+│   │   ├── views/            # 页面视图
+│   │   ├── stores/           # Pinia 状态管理
+│   │   ├── services/         # API 服务
+│   │   ├── styles/           # SCSS 样式
+│   │   ├── types/            # TypeScript 类型
+│   │   └── assets/           # 静态资源
+│   └── package.json
 ├── backend/                  # 后端项目（Node.js + Express）
+│   ├── src/
+│   │   ├── routes/           # API 路由
+│   │   ├── services/         # 业务服务（AI、对话管理）
+│   │   ├── config/           # 配置文件
+│   │   └── types/            # TypeScript 类型
+│   ├── data/                 # 数据存储
+│   └── package.json
 ├── docs/                     # 文档
-└── CLAUDE.md
+├── CLAUDE.md
+└── README.md
 ```
 
 ## 技术栈
 
 ### 前端
 - Vue 3 + Vite + TypeScript
+- SCSS 样式
 - Pinia（状态管理）
-- Vue Router（路由）
+- 贾维斯风格 UI（粒子球、心跳动画、钢铁侠红金配色）
 
 ### 后端
 - Node.js + Express + TypeScript
 - JSON 文件存储数据
-- AI 服务：豆包 API（可扩展）
+- AI 服务：豆包 API（可扩展架构）
 
 ## 开发命令
 
@@ -59,8 +77,7 @@ pnpm dev
 
 ## 环境变量
 
-后端需要配置以下环境变量（参考 `backend/.env.example`）：
-
+### 后端（参考 `backend/.env.example`）
 ```env
 # AI 服务配置
 DOUBAO_API_KEY=your_doubao_api_key
@@ -74,6 +91,28 @@ PORT=3000
 NODE_ENV=development
 ```
 
+### 前端（参考 `frontend/.env`）
+```env
+# Figma API 配置（开发用）
+VITE_FIGMA_TOKEN=your_figma_token
+VITE_FIGMA_FILE_KEY=your_figma_file_key
+```
+
+## UI 设计
+
+### 贾维斯风格
+- 深色科技背景 + 扫描线 + 粒子效果
+- 钢铁侠红金配色（#EF4444 红色 + #F59E0B 金色）
+- 科技感字体（Share Tech Mono / Fira Code）
+- HUD 四角装饰 + 网格背景
+
+### 界面功能
+- 粒子球默认视图（3D 旋转 + 能量环动画）
+- 心跳动画（语音按钮脉动效果）
+- 模式切换（粒子视图/对话记录）
+- 聊天界面（消息气泡 + 打字机效果）
+- 系统状态监控（CPU/活动/能量）
+
 ## 开发规范
 
 ### 语言
@@ -81,9 +120,9 @@ NODE_ENV=development
 - 代码变量和函数名使用英文
 
 ### 代码规范
+- 使用 TypeScript 进行开发
 - 遵循清晰的命名约定
 - 保持代码简洁易读
-- 添加必要的注释说明业务逻辑
 
 ### Git 提交规范
 - 使用语义化的提交信息
@@ -96,6 +135,5 @@ NODE_ENV=development
 - [ ] 完整的 AI 服务集成（豆包 API）
 - [ ] 语音对话功能
 - [ ] 流式输出支持
-- [ ] 前端 UI 开发（等 Figma 设计稿）
 - [ ] 用户认证功能
 - [ ] 部署配置

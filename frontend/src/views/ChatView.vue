@@ -65,6 +65,7 @@
             </div>
             <div class="message-content">
               <div class="message-text">{{ msg.content }}</div>
+              <AudioPlayer v-if="msg.audioUrl" :src="msg.audioUrl" />
               <div class="message-time">{{ formatTime(msg.timestamp) }}</div>
             </div>
           </div>
@@ -80,10 +81,22 @@
       </div>
     </main>
 
+    <!-- 语音录制弹窗 -->
+    <div class="voice-modal" v-if="showVoiceModal">
+      <div class="voice-modal-content">
+        <VoiceRecorder 
+          @start="onVoiceStart"
+          @stop="onVoiceStop"
+          @cancel="onVoiceCancel"
+        />
+        <button class="cancel-btn" @click="onVoiceCancel">取消</button>
+      </div>
+    </div>
+
     <!-- 底部输入区 -->
     <footer class="footer">
       <div class="input-container">
-        <button class="voice-btn" :class="{ active: isVoiceActive }" @click="toggleVoice">
+        <button class="voice-btn" :class="{ active: isVoiceActive }" @click="showVoiceModal = true">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
         <input 
@@ -93,8 +106,9 @@
           @keydown.enter="sendMessage"
           class="message-input"
         />
-        <button class="send-btn" @click="sendMessage" :disabled="!inputText.trim()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <button class="send-btn" @click="sendMessage" :disabled="!inputText.trim() || isSending">
+          <svg v-if="!isSending" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          <span v-else class="loading"></span>
         </button>
       </div>
       <div class="system-status">
@@ -107,14 +121,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
+import VoiceRecorder from '../components/VoiceRecorder.vue';
+import AudioPlayer from '../components/AudioPlayer.vue';
+import { transcribeAudio, synthesizeSpeech } from '../services/voice';
+import { streamMessage, getConversations, getMessages, createConversation, deleteConversation } from '../services/chat';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  audioUrl?: string;
 }
 
 const messages = ref<Message[]>([]);
@@ -123,6 +142,8 @@ const showChat = ref(false);
 const isVoiceActive = ref(false);
 const isConnected = ref(true);
 const isTyping = ref(false);
+const isSending = ref(false);
+const showVoiceModal = ref(false);
 const messagesContainer = ref<HTMLElement | null>(null);
 
 const systemStatus = ref({
@@ -133,10 +154,6 @@ const systemStatus = ref({
 
 const toggleMode = () => {
   showChat.value = !showChat.value;
-};
-
-const toggleVoice = () => {
-  isVoiceActive.value = !isVoiceActive.value;
 };
 
 const getParticleStyle = (index: number) => {
@@ -168,34 +185,102 @@ const scrollToBottom = async () => {
   }
 };
 
-const sendMessage = async () => {
-  if (!inputText.value.trim()) return;
+// 语音录制开始
+const onVoiceStart = () => {
+  isVoiceActive.value = true;
+};
+
+// 语音录制完成
+const onVoiceStop = async (audioBlob: Blob) => {
+  isVoiceActive.value = false;
+  showVoiceModal.value = false;
+  
+  try {
+    // 语音转文字
+    const text = await transcribeAudio(audioBlob);
+    if (text) {
+      // 发送识别出的文字
+      await sendTextMessage(text);
+    }
+  } catch (error) {
+    console.error('语音识别失败:', error);
+    alert('语音识别失败，请重试');
+  }
+};
+
+// 取消语音录制
+const onVoiceCancel = () => {
+  isVoiceActive.value = false;
+  showVoiceModal.value = false;
+};
+
+// 发送文字消息（使用流式输出）
+const sendTextMessage = async (text: string) => {
+  if (!text.trim() || isSending.value) return;
+
+  isSending.value = true;
 
   const userMessage: Message = {
     id: uuidv4(),
     role: 'user',
-    content: inputText.value,
+    content: text,
     timestamp: new Date()
   };
 
   messages.value.push(userMessage);
-  inputText.value = '';
   showChat.value = true;
   scrollToBottom();
 
-  // 模拟 AI 回复
+  // 创建空的 AI 消息用于流式填充
+  const aiMessage: Message = {
+    id: uuidv4(),
+    role: 'assistant',
+    content: '',
+    timestamp: new Date()
+  };
+  messages.value.push(aiMessage);
   isTyping.value = true;
-  setTimeout(() => {
-    const aiMessage: Message = {
-      id: uuidv4(),
-      role: 'assistant',
-      content: '贾维斯收到，正在处理您的请求...',
-      timestamp: new Date()
-    };
-    messages.value.push(aiMessage);
+  scrollToBottom();
+
+  try {
+    let conversationId: string | undefined;
+
+    for await (const event of streamMessage(text, conversationId)) {
+      if (event.type === 'conversationId') {
+        conversationId = event.data;
+      } else if (event.type === 'content') {
+        aiMessage.content += event.data;
+        scrollToBottom();
+      } else if (event.type === 'done') {
+        // 流式完成，生成语音
+        try {
+          const audioUrl = await synthesizeSpeech(aiMessage.content);
+          aiMessage.audioUrl = audioUrl;
+        } catch (error) {
+          console.error('语音合成失败:', error);
+        }
+      } else if (event.type === 'error') {
+        aiMessage.content = `错误: ${event.data}`;
+      }
+    }
+  } catch (error) {
+    console.error('流式请求失败:', error);
+    aiMessage.content = '连接失败，请检查网络或后端服务';
+  } finally {
     isTyping.value = false;
+    isSending.value = false;
     scrollToBottom();
-  }, 1500);
+  }
+};
+
+// 发送文字消息
+const sendMessage = async () => {
+  if (!inputText.value.trim()) return;
+  
+  const text = inputText.value;
+  inputText.value = '';
+  
+  await sendTextMessage(text);
 };
 
 // 更新系统状态
@@ -556,6 +641,10 @@ onMounted(() => {
 }
 
 .message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
   .message-text {
     padding: 12px 16px;
     border-radius: 12px;
@@ -577,7 +666,6 @@ onMounted(() => {
   .message-time {
     font-size: 10px;
     color: $text-muted;
-    margin-top: 4px;
     
     .user & {
       text-align: right;
@@ -609,6 +697,43 @@ onMounted(() => {
 @keyframes typing {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
   30% { transform: translateY(-8px); opacity: 1; }
+}
+
+// 语音录制弹窗
+.voice-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.voice-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px;
+  background: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: 20px;
+}
+
+.cancel-btn {
+  padding: 10px 30px;
+  background: transparent;
+  border: 1px solid $border-color;
+  color: $text-secondary;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
 }
 
 // 底部输入区
@@ -704,6 +829,19 @@ onMounted(() => {
     opacity: 0.5;
     cursor: not-allowed;
   }
+  
+  .loading {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .system-status {

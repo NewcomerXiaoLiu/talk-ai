@@ -14,8 +14,19 @@ import type { Message } from '../types';
 
 const router = Router();
 
-// 创建 AI 提供者
-const aiProvider = createAIProvider(config.ai.provider, config.ai.doubao);
+// 根据配置创建 AI 提供者
+function getAIProvider() {
+  const provider = config.ai.provider;
+  
+  switch (provider) {
+    case 'mimo':
+      return createAIProvider('mimo', config.ai.mimo);
+    case 'doubao':
+      return createAIProvider('doubao', config.ai.doubao);
+    default:
+      return createAIProvider('mimo', config.ai.mimo);
+  }
+}
 
 // 发送消息
 router.post('/', async (req: Request, res: Response) => {
@@ -40,7 +51,8 @@ router.post('/', async (req: Request, res: Response) => {
     // 保存用户消息
     addMessage(conversation.id, userMessage);
 
-    // 调用 AI 生成回复
+    // 获取 AI 提供者并调用
+    const aiProvider = getAIProvider();
     const messages = getMessages(conversation.id);
     const aiResponse = await aiProvider.chat(messages);
 
@@ -64,6 +76,70 @@ router.post('/', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('发送消息失败:', error);
     res.status(500).json({ success: false, error: '发送消息失败' });
+  }
+});
+
+// 流式发送消息
+router.post('/stream', async (req: Request, res: Response) => {
+  try {
+    const { conversationId, content, type = 'text' } = req.body;
+
+    // 设置 SSE 响应头
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    // 获取或创建会话
+    let conversation = getConversation(conversationId);
+    if (!conversation) {
+      conversation = createConversation();
+    }
+
+    // 创建用户消息
+    const userMessage: Message = {
+      id: uuidv4(),
+      role: 'user',
+      content,
+      timestamp: new Date(),
+      type: type as 'text' | 'voice'
+    };
+
+    // 保存用户消息
+    addMessage(conversation.id, userMessage);
+
+    // 发送会话 ID
+    res.write(`data: ${JSON.stringify({ conversationId: conversation.id })}\n\n`);
+
+    // 获取 AI 提供者并流式调用
+    const aiProvider = getAIProvider();
+    const messages = getMessages(conversation.id);
+    
+    let fullResponse = '';
+    
+    for await (const chunk of aiProvider.streamChat(messages)) {
+      fullResponse += chunk;
+      res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+    }
+
+    // 创建 AI 回复并保存
+    const assistantMessage: Message = {
+      id: uuidv4(),
+      role: 'assistant',
+      content: fullResponse,
+      timestamp: new Date(),
+      type: 'text'
+    };
+
+    addMessage(conversation.id, assistantMessage);
+
+    // 发送完成信号
+    res.write(`data: ${JSON.stringify({ done: true, message: assistantMessage })}\n\n`);
+    res.end();
+  } catch (error) {
+    console.error('流式发送消息失败:', error);
+    res.write(`data: ${JSON.stringify({ error: '发送消息失败' })}\n\n`);
+    res.end();
   }
 });
 

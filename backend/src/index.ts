@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import config from './config';
 import chatRoutes from './routes/chat';
+import voiceRoutes from './routes/voice';
 
 // 加载环境变量
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // 路由
 app.use('/api/chat', chatRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // 基础路由
 app.get('/', (req, res) => {
