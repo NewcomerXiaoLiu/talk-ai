@@ -1,0 +1,28 @@
+// 钢铁侠主题色
+$color-primary: #EF4444;      // 红色
+$color-secondary: #F59E0B;    // 金色/琥珀色
+$color-accent: #DC2626;       // 深红
+$color-gold: #FFD700;         // 亮金
+
+// 背景色
+$bg-dark: #0A0A0A;
+$bg-darker: #050505;
+$bg-card: rgba(20, 20, 20, 0.8);
+$bg-glass: rgba(255, 255, 255, 0.05);
+
+// 文字颜色
+$text-primary: #FFFFFF;
+$text-secondary: rgba(255, 255, 255, 0.7);
+$text-muted: rgba(255, 255, 255, 0.4);
+
+// 边框
+$border-color: rgba(239, 68, 68, 0.3);
+$border-glow: rgba(245, 158, 11, 0.5);
+
+// 字体
+$font-tech: 'Share Tech Mono', 'Fira Code', monospace;
+
+// 动画
+$transition-fast: 150ms ease;
+$transition-normal: 300ms ease;
+$transition-slow: 500ms ease;
