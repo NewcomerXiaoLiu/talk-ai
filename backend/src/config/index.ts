@@ -18,8 +18,7 @@ export default {
     }
   },
   voice: {
-    whisper: {
-      apiKey: process.env.OPENAI_API_KEY || ''
-    }
+    apiKey: process.env.MIMO_API_KEY || '',
+    defaultVoice: process.env.MIMO_DEFAULT_VOICE || '冰糖'
   }
 };

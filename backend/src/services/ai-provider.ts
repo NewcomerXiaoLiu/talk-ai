@@ -27,11 +27,11 @@ export class MiMoProvider implements AIProvider {
         content: msg.content
       }));
 
-      const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'api-key': this.apiKey
         },
         body: JSON.stringify({
           model: this.model,
@@ -60,11 +60,11 @@ export class MiMoProvider implements AIProvider {
         content: msg.content
       }));
 
-      const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'api-key': this.apiKey
         },
         body: JSON.stringify({
           model: this.model,
