@@ -6,9 +6,9 @@
 
 - 贾维斯风格 UI - 深色科技背景、粒子球动画、钢铁侠红金配色
 - 文字对话 - 支持与 AI 进行文字交流
-- 语音对话 - 支持语音识别和语音合成（开发中）
+- 语音对话 - 语音识别（MiMo ASR）+ 语音合成（MiMo TTS）
 - 会话管理 - 创建、切换、删除会话
-- 流式输出 - 支持实时流式显示 AI 回复（开发中）
+- 流式输出 - 支持实时流式显示 AI 回复
 
 ## 技术栈
 
@@ -21,7 +21,8 @@
 ### 后端
 - Node.js + Express + TypeScript
 - JSON 文件存储数据
-- AI 服务：豆包 API（可扩展架构）
+- AI 服务：MiMo v2.5（小米模型，可扩展架构）
+- 语音服务：MiMo ASR/TTS
 
 ## 项目结构
 
@@ -32,6 +33,7 @@ talk-ai/
 │   │   ├── components/       # Vue 组件
 │   │   ├── views/            # 页面视图
 │   │   ├── stores/           # Pinia 状态管理
+│   │   ├── services/         # API 服务
 │   │   ├── styles/           # SCSS 样式
 │   │   └── types/            # TypeScript 类型
 │   └── package.json
@@ -40,6 +42,7 @@ talk-ai/
 │   │   ├── routes/           # API 路由
 │   │   ├── services/         # 业务服务
 │   │   └── config/           # 配置文件
+│   ├── data/                 # 数据存储
 │   └── package.json
 ├── CLAUDE.md
 └── README.md
@@ -69,7 +72,7 @@ pnpm install
 ```bash
 # 后端配置
 cp backend/.env.example backend/.env
-# 编辑 backend/.env 文件，填入你的 API 密钥
+# 编辑 backend/.env 文件，填入 MiMo API 密钥
 ```
 
 ### 启动开发服务器
@@ -113,11 +116,19 @@ pnpm dev
 | 方法 | 路径 | 描述 |
 |------|------|------|
 | POST | /api/chat | 发送消息 |
+| POST | /api/chat/stream | 流式发送消息（SSE） |
 | GET | /api/chat/conversations | 获取会话列表 |
 | POST | /api/chat/conversations | 创建新会话 |
 | GET | /api/chat/conversations/:id | 获取会话详情 |
 | DELETE | /api/chat/conversations/:id | 删除会话 |
 | GET | /api/chat/conversations/:id/messages | 获取会话消息 |
+
+### 语音相关
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| POST | /api/voice/transcribe | 语音转文字（MiMo ASR） |
+| POST | /api/voice/synthesize | 文字转语音（MiMo TTS） |
 
 ### 健康检查
 
@@ -131,11 +142,26 @@ pnpm dev
 
 | 变量名 | 描述 | 默认值 |
 |--------|------|--------|
-| DOUBAO_API_KEY | 豆包 API 密钥 | - |
-| DOUBAO_MODEL | 豆包模型名称 | doubao-pro |
-| OPENAI_API_KEY | OpenAI API 密钥（用于语音） | - |
+| AI_PROVIDER | AI 服务提供商 | mimo |
+| MIMO_API_KEY | MiMo API 密钥 | - |
+| MIMO_BASE_URL | MiMo API 地址 | https://api.xiaomimimo.com/v1 |
+| MIMO_MODEL | 文本模型名称 | mimo-v2.5 |
+| MIMO_DEFAULT_VOICE | 默认语音音色 | 冰糖 |
 | PORT | 服务器端口 | 3000 |
 | NODE_ENV | 运行环境 | development |
+
+## 可用音色
+
+| 音色名 | 语言 | 性别 |
+|--------|------|------|
+| 冰糖 | 中文 | 女性 |
+| 茉莉 | 中文 | 女性 |
+| 苏打 | 中文 | 男性 |
+| 白桦 | 中文 | 男性 |
+| Mia | 英文 | 女性 |
+| Chloe | 英文 | 女性 |
+| Milo | 英文 | 男性 |
+| Dean | 英文 | 男性 |
 
 ## 开发规范
 
@@ -151,13 +177,11 @@ pnpm dev
 - test: 测试
 - chore: 构建/工具
 
-## 待开发内容
+## 已完成功能
 
-- [ ] 完整的 AI 服务集成（豆包 API）
-- [ ] 语音对话功能
-- [ ] 流式输出支持
-- [ ] 用户认证功能
-- [ ] 部署配置
+- [x] AI 服务集成（MiMo v2.5）
+- [x] 语音对话功能（MiMo ASR/TTS）
+- [x] 流式输出支持
 
 ## 许可证
 

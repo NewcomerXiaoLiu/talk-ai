@@ -44,7 +44,8 @@ talk-ai/
 ### 后端
 - Node.js + Express + TypeScript
 - JSON 文件存储数据
-- AI 服务：豆包 API（可扩展架构）
+- AI 服务：MiMo v2.5（小米模型，可扩展架构）
+- 语音服务：MiMo ASR/TTS（语音识别/合成）
 
 ## 开发命令
 
@@ -66,11 +67,16 @@ pnpm dev
 
 ### 聊天相关
 - `POST /api/chat` - 发送消息
+- `POST /api/chat/stream` - 流式发送消息（SSE）
 - `GET /api/chat/conversations` - 获取会话列表
 - `POST /api/chat/conversations` - 创建新会话
 - `GET /api/chat/conversations/:id` - 获取会话详情
 - `DELETE /api/chat/conversations/:id` - 删除会话
 - `GET /api/chat/conversations/:id/messages` - 获取会话消息
+
+### 语音相关
+- `POST /api/voice/transcribe` - 语音转文字（MiMo ASR）
+- `POST /api/voice/synthesize` - 文字转语音（MiMo TTS）
 
 ### 健康检查
 - `GET /health` - 健康检查
@@ -80,11 +86,15 @@ pnpm dev
 ### 后端（参考 `backend/.env.example`）
 ```env
 # AI 服务配置
-DOUBAO_API_KEY=your_doubao_api_key
-DOUBAO_MODEL=doubao-pro
+AI_PROVIDER=mimo
 
-# 语音服务配置（可选）
-OPENAI_API_KEY=your_openai_api_key
+# MiMo 配置（小米模型 - 文本/语音/ASR/TTS）
+MIMO_API_KEY=your_mimo_api_key
+MIMO_BASE_URL=https://api.xiaomimimo.com/v1
+MIMO_MODEL=mimo-v2.5
+
+# MiMo 语音配置
+MIMO_DEFAULT_VOICE=冰糖
 
 # 服务器配置
 PORT=3000
