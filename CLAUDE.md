@@ -130,10 +130,12 @@ VITE_FIGMA_FILE_KEY=your_figma_file_key
 - 格式：`类型: 描述内容`
 - 类型：feat（新功能）、fix（修复）、docs（文档）、style（样式）、refactor（重构）、test（测试）、chore（构建/工具）
 
+## 已完成功能
+
+- [x] AI 服务集成（MiMo v2.5）
+- [x] 语音对话功能（MiMo ASR/TTS）
+- [x] 流式输出支持
+
 ## 待开发内容
 
-- [ ] 完整的 AI 服务集成（豆包 API）
-- [ ] 语音对话功能
-- [ ] 流式输出支持
-- [ ] 用户认证功能
 - [ ] 部署配置
