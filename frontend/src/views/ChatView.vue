@@ -36,7 +36,7 @@
     <main class="main-content">
       <!-- 粒子球视图 -->
       <div v-if="!showChat" class="particle-view">
-        <div class="particle-sphere" :class="{ pulsing: isVoiceActive }">
+        <div class="particle-sphere" :class="{ pulsing: isListening || isVoiceActive }">
           <div class="sphere-ring ring-1"></div>
           <div class="sphere-ring ring-2"></div>
           <div class="sphere-ring ring-3"></div>
@@ -45,7 +45,10 @@
         </div>
         <div class="ai-label">
           <span class="label-text">JARVIS</span>
-          <span class="label-sub">READY</span>
+          <span class="label-sub" :class="{ listening: isListening }">{{ isListening ? 'LISTENING' : 'READY' }}</span>
+        </div>
+        <div v-if="recognitionText" class="recognition-text">
+          <span>{{ recognitionText }}</span>
         </div>
       </div>
 
@@ -145,6 +148,84 @@ const isTyping = ref(false);
 const isSending = ref(false);
 const showVoiceModal = ref(false);
 const messagesContainer = ref<HTMLElement | null>(null);
+const isListening = ref(false);
+const recognitionText = ref('');
+
+// Web Speech API 持续语音识别
+let recognition: any = null;
+
+const initSpeechRecognition = () => {
+  const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+  if (!SpeechRecognition) {
+    console.warn('浏览器不支持语音识别');
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'zh-CN';
+
+  recognition.onstart = () => {
+    isListening.value = true;
+  };
+
+  recognition.onend = () => {
+    isListening.value = false;
+    // 语音模式下自动重启监听
+    if (!showChat.value) {
+      try {
+        recognition.start();
+      } catch (e) {
+        // 忽略重复启动错误
+      }
+    }
+  };
+
+  recognition.onresult = (event: any) => {
+    let finalTranscript = '';
+    let interimTranscript = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+
+    // 显示识别中的文本
+    recognitionText.value = interimTranscript;
+
+    // 最终结果自动发送
+    if (finalTranscript.trim()) {
+      recognitionText.value = '';
+      sendTextMessage(finalTranscript.trim());
+    }
+  };
+
+  recognition.onerror = (event: any) => {
+    console.error('语音识别错误:', event.error);
+    isListening.value = false;
+  };
+};
+
+const startListening = () => {
+  if (recognition && !isListening.value) {
+    try {
+      recognition.start();
+    } catch (e) {
+      // 忽略
+    }
+  }
+};
+
+const stopListening = () => {
+  if (recognition && isListening.value) {
+    recognition.stop();
+  }
+};
 
 const systemStatus = ref({
   cpu: 23,
@@ -154,6 +235,13 @@ const systemStatus = ref({
 
 const toggleMode = () => {
   showChat.value = !showChat.value;
+  if (showChat.value) {
+    // 切换到文字模式，停止监听
+    stopListening();
+  } else {
+    // 切换到语音模式，开始监听
+    startListening();
+  }
 };
 
 const getParticleStyle = (index: number) => {
@@ -290,6 +378,16 @@ onMounted(() => {
     systemStatus.value.activity = Math.floor(70 + Math.random() * 30);
     systemStatus.value.energy = Math.floor(80 + Math.random() * 20);
   }, 3000);
+
+  // 初始化语音识别并开始监听
+  initSpeechRecognition();
+  startListening();
+});
+
+// 组件卸载时停止监听
+import { onUnmounted } from 'vue';
+onUnmounted(() => {
+  stopListening();
 });
 </script>
 
@@ -544,7 +642,7 @@ onMounted(() => {
 
 .ai-label {
   text-align: center;
-  
+
   .label-text {
     display: block;
     font-size: 32px;
@@ -553,14 +651,44 @@ onMounted(() => {
     letter-spacing: 8px;
     text-shadow: 0 0 20px rgba($color-secondary, 0.5);
   }
-  
+
   .label-sub {
     display: block;
     font-size: 14px;
     color: $text-muted;
     letter-spacing: 4px;
     margin-top: 8px;
+    transition: all 0.3s ease;
+
+    &.listening {
+      color: $color-primary;
+      animation: listeningPulse 1.5s infinite;
+    }
   }
+}
+
+.recognition-text {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: rgba($color-primary, 0.1);
+  border: 1px solid rgba($color-primary, 0.3);
+  border-radius: 8px;
+  font-family: $font-tech;
+  font-size: 16px;
+  color: $color-primary;
+  text-align: center;
+  max-width: 400px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes listeningPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 // 对话视图
