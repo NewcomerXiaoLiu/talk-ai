@@ -1,10 +1,9 @@
 import config from '../config';
 
-const MIMO_BASE_URL = 'https://api.xiaomimimo.com/v1';
-
 // 语音识别（ASR）- 使用 MiMo ASR
 export async function transcribeAudio(audioBuffer: Buffer, fileName: string): Promise<string> {
   const apiKey = config.voice.apiKey;
+  const baseUrl = config.ai.mimo.baseUrl;
 
   if (!apiKey) {
     throw new Error('未配置 MiMo API Key');
@@ -18,7 +17,7 @@ export async function transcribeAudio(audioBuffer: Buffer, fileName: string): Pr
   const audioBase64 = audioBuffer.toString('base64');
   const dataUrl = `data:${mimeType};base64,${audioBase64}`;
 
-  const response = await fetch(`${MIMO_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'api-key': apiKey,
@@ -57,12 +56,15 @@ export async function transcribeAudio(audioBuffer: Buffer, fileName: string): Pr
 // 语音合成（TTS）- 使用 MiMo TTS
 export async function synthesizeSpeech(text: string, voice: string = '冰糖'): Promise<Buffer> {
   const apiKey = config.voice.apiKey;
+  const baseUrl = config.ai.mimo.baseUrl;
 
   if (!apiKey) {
     throw new Error('未配置 MiMo API Key');
   }
 
-  const response = await fetch(`${MIMO_BASE_URL}/chat/completions`, {
+  console.log('TTS 请求:', { baseUrl, text: text.substring(0, 50), voice });
+
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'api-key': apiKey,
@@ -89,10 +91,12 @@ export async function synthesizeSpeech(text: string, voice: string = '冰糖'): 
 
   if (!response.ok) {
     const error = await response.text();
+    console.error('TTS API 错误:', response.status, error);
     throw new Error(`语音合成失败: ${response.status} - ${error}`);
   }
 
   const data: any = await response.json();
+  console.log('TTS 响应:', { hasAudio: !!data.choices?.[0]?.message?.audio?.data });
   const audioData = data.choices?.[0]?.message?.audio?.data;
 
   if (!audioData) {

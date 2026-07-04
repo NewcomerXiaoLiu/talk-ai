@@ -27,6 +27,8 @@ export class MiMoProvider implements AIProvider {
         content: msg.content
       }));
 
+      console.log('MiMo API 请求:', { baseUrl: this.baseUrl, model: this.model });
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -42,10 +44,13 @@ export class MiMoProvider implements AIProvider {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('MiMo API 错误:', response.status, errorText);
         throw new Error(`MiMo API 请求失败: ${response.status}`);
       }
 
       const data: any = await response.json();
+      console.log('MiMo API 响应:', data.choices[0].message);
       return data.choices[0].message.content;
     } catch (error) {
       console.error('MiMo API 调用失败:', error);
@@ -101,7 +106,9 @@ export class MiMoProvider implements AIProvider {
             
             try {
               const parsed: any = JSON.parse(data);
-              const content = parsed.choices[0]?.delta?.content;
+              const delta = parsed.choices[0]?.delta;
+              // MiMo 是推理模型，reasoning_content 是思考过程，content 是最终回复
+              const content = delta?.content;
               if (content) {
                 yield content;
               }

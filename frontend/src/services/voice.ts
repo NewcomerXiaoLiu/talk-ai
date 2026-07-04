@@ -19,7 +19,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
 }
 
 // 文字转语音
-export async function synthesizeSpeech(text: string, voice: string = 'alloy'): Promise<string> {
+export async function synthesizeSpeech(text: string, voice: string = '冰糖'): Promise<string> {
   const response = await fetch(`${API_BASE}/synthesize`, {
     method: 'POST',
     headers: {

@@ -4,148 +4,91 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个名为 "talk-ai" 的对话 AI 项目。项目目标是构建一个 AI 对话系统，支持语音对话和文字对话功能。采用贾维斯（钢铁侠）风格的炫酷 UI 设计。
-
-## 项目结构
-
-```
-talk-ai/
-├── frontend/                 # 前端项目（Vue 3 + Vite）
-│   ├── src/
-│   │   ├── components/       # Vue 组件
-│   │   ├── views/            # 页面视图
-│   │   ├── stores/           # Pinia 状态管理
-│   │   ├── services/         # API 服务
-│   │   ├── styles/           # SCSS 样式
-│   │   ├── types/            # TypeScript 类型
-│   │   └── assets/           # 静态资源
-│   └── package.json
-├── backend/                  # 后端项目（Node.js + Express）
-│   ├── src/
-│   │   ├── routes/           # API 路由
-│   │   ├── services/         # 业务服务（AI、对话管理）
-│   │   ├── config/           # 配置文件
-│   │   └── types/            # TypeScript 类型
-│   ├── data/                 # 数据存储
-│   └── package.json
-├── docs/                     # 文档
-├── CLAUDE.md
-└── README.md
-```
-
-## 技术栈
-
-### 前端
-- Vue 3 + Vite + TypeScript
-- SCSS 样式
-- Pinia（状态管理）
-- 贾维斯风格 UI（粒子球、心跳动画、钢铁侠红金配色）
-
-### 后端
-- Node.js + Express + TypeScript
-- JSON 文件存储数据
-- AI 服务：MiMo v2.5（小米模型，可扩展架构）
-- 语音服务：MiMo ASR/TTS（语音识别/合成）
+Talk-AI - 贾维斯风格 AI 对话系统，支持语音对话和文字对话。采用 MiMo v2.5 作为 AI 和语音服务。
 
 ## 开发命令
 
-### 前端开发
+### 启动开发服务器
 ```bash
-cd frontend
-pnpm install
-pnpm dev
+cd backend && pnpm dev   # 后端 :3000
+cd frontend && pnpm dev  # 前端 :5173
 ```
 
-### 后端开发
+### 构建
 ```bash
-cd backend
-pnpm install
-pnpm dev
+cd frontend && pnpm build  # vue-tsc + vite build
+cd backend && pnpm build   # tsc
 ```
 
-## API 接口
+### 类型检查
+```bash
+cd frontend && npx vue-tsc --noEmit
+cd backend && npx tsc --noEmit
+```
 
-### 聊天相关
-- `POST /api/chat` - 发送消息
-- `POST /api/chat/stream` - 流式发送消息（SSE）
-- `GET /api/chat/conversations` - 获取会话列表
-- `POST /api/chat/conversations` - 创建新会话
-- `GET /api/chat/conversations/:id` - 获取会话详情
-- `DELETE /api/chat/conversations/:id` - 删除会话
-- `GET /api/chat/conversations/:id/messages` - 获取会话消息
+## 架构
 
-### 语音相关
-- `POST /api/voice/transcribe` - 语音转文字（MiMo ASR）
-- `POST /api/voice/synthesize` - 文字转语音（MiMo TTS）
+### 前端 (Vue 3 + Vite + TypeScript + Pinia)
+- `src/views/ChatView.vue` - 主界面，集成粒子球/心跳动画/语音/聊天
+- `src/components/` - VoiceRecorder（录音）、AudioPlayer（播放）
+- `src/services/` - chat.ts（流式SSE）、voice.ts（ASR/TTS）
+- `src/stores/` - Pinia 状态管理
 
-### 健康检查
-- `GET /health` - 健康检查
+### 后端 (Node.js + Express + TypeScript)
+- `src/services/ai-provider.ts` - AI 服务抽象层（AIProvider 接口 + MiMoProvider）
+- `src/services/voice.ts` - MiMo ASR/TTS 语音服务
+- `src/services/conversation.ts` - JSON 文件存储会话数据
+- `src/routes/chat.ts` - 聊天 API + SSE 流式端点
+- `src/routes/voice.ts` - 语音 API（multipart upload）
+- `src/config/index.ts` - 环境变量配置
 
-## 环境变量
+### 数据流
+```
+前端 ChatView → chat.ts (fetch SSE) → /api/chat/stream → MiMoProvider.streamChat → MiMo API
+前端 VoiceRecorder → voice.ts → /api/voice/transcribe → MiMo ASR → 文字 → ChatView
+```
 
-### 后端（参考 `backend/.env.example`）
+## 关键配置
+
+### 环境变量 (backend/.env)
 ```env
-# AI 服务配置
 AI_PROVIDER=mimo
-
-# MiMo 配置（小米模型 - 文本/语音/ASR/TTS）
-MIMO_API_KEY=your_mimo_api_key
+MIMO_API_KEY=          # 必填
 MIMO_BASE_URL=https://api.xiaomimimo.com/v1
 MIMO_MODEL=mimo-v2.5
-
-# MiMo 语音配置
 MIMO_DEFAULT_VOICE=冰糖
-
-# 服务器配置
-PORT=3000
-NODE_ENV=development
 ```
 
-### 前端（参考 `frontend/.env`）
-```env
-# Figma API 配置（开发用）
-VITE_FIGMA_TOKEN=your_figma_token
-VITE_FIGMA_FILE_KEY=your_figma_file_key
+### MiMo API 认证
+使用 `api-key` header（非 Bearer Token）：
+```typescript
+headers: { 'api-key': apiKey }
 ```
 
-## UI 设计
+### MiMo ASR 请求格式
+```json
+{
+  "model": "mimo-v2.5-asr",
+  "messages": [{ "role": "user", "content": [{ "type": "input_audio", "input_audio": { "data": "data:audio/wav;base64,..." } }] }],
+  "asr_options": { "language": "zh" }
+}
+```
 
-### 贾维斯风格
-- 深色科技背景 + 扫描线 + 粒子效果
-- 钢铁侠红金配色（#EF4444 红色 + #F59E0B 金色）
-- 科技感字体（Share Tech Mono / Fira Code）
-- HUD 四角装饰 + 网格背景
+### MiMo TTS 请求格式
+```json
+{
+  "model": "mimo-v2.5-tts",
+  "messages": [{ "role": "user", "content": "" }, { "role": "assistant", "content": "要合成的文本" }],
+  "audio": { "format": "wav", "voice": "冰糖" }
+}
+```
 
-### 界面功能
-- 粒子球默认视图（3D 旋转 + 能量环动画）
-- 心跳动画（语音按钮脉动效果）
-- 模式切换（粒子视图/对话记录）
-- 聊天界面（消息气泡 + 打字机效果）
-- 系统状态监控（CPU/活动/能量）
+### 可用音色
+中文：冰糖、茉莉、苏打、白桦 | 英文：Mia、Chloe、Milo、Dean
 
 ## 开发规范
 
-### 语言
-- 项目文档和注释使用中文
-- 代码变量和函数名使用英文
-
-### 代码规范
-- 使用 TypeScript 进行开发
-- 遵循清晰的命名约定
-- 保持代码简洁易读
-
-### Git 提交规范
-- 使用语义化的提交信息
-- 提交信息使用中文
-- 格式：`类型: 描述内容`
-- 类型：feat（新功能）、fix（修复）、docs（文档）、style（样式）、refactor（重构）、test（测试）、chore（构建/工具）
-
-## 已完成功能
-
-- [x] AI 服务集成（MiMo v2.5）
-- [x] 语音对话功能（MiMo ASR/TTS）
-- [x] 流式输出支持
-
-## 待开发内容
-
-- [ ] 部署配置
+- 文档/注释用中文，变量/函数名用英文
+- 包管理工具：pnpm
+- Git 提交：`类型: 描述内容`（feat/fix/docs/style/refactor/test/chore）
+- TypeScript 严格模式，类型标注明确

@@ -32,6 +32,7 @@ function getAIProvider() {
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { conversationId, content, type = 'text' } = req.body;
+    console.log('收到消息:', { conversationId, content });
 
     // 获取或创建会话
     let conversation = getConversation(conversationId);
@@ -54,7 +55,9 @@ router.post('/', async (req: Request, res: Response) => {
     // 获取 AI 提供者并调用
     const aiProvider = getAIProvider();
     const messages = getMessages(conversation.id);
+    console.log('调用 AI 提供者...');
     const aiResponse = await aiProvider.chat(messages);
+    console.log('AI 回复:', aiResponse);
 
     // 创建 AI 回复
     const assistantMessage: Message = {
